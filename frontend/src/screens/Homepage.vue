@@ -73,7 +73,6 @@
 </template>
 
 <script>
-import axios from "axios";
 import QRCode from "qrcode"; // Import the qrcode library
 
 export default {
@@ -86,11 +85,13 @@ export default {
   methods: {
     async generateURL() {
       try {
-        const response = await axios.post("http://localhost:3000/generateQR", {
-          url: this.url,
+        const canvas = await QRCode.toCanvas(this.url, {
+          errorCorrectionLevel: "H",
         });
+        // Convert canvas to data URL
+        const generatedQR = canvas.toDataURL();
 
-        this.generatedQR = response.data.generatedQR;
+        this.generatedQR = generatedQR;
       } catch (error) {
         console.error("Error generating QR code:", error);
       }
