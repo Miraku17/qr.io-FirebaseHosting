@@ -11,10 +11,9 @@
       </h2>
     </div>
     <div class="image-holder flex items-center justify-center w-2/3">
-      <!-- Add flex, items-center, and justify-center -->
       <img
         src="../assets/image.svg"
-        alt="Artist"
+        alt="Image"
         class="object-center w-auto h-3/4"
       />
     </div>
@@ -33,7 +32,8 @@
           >Enter QR Code Content:</label
         >
         <input
-        placeholder="URL here"
+          v-model="url"
+          placeholder="URL here"
           type="text"
           id="qrContent"
           name="qrContent"
@@ -43,18 +43,79 @@
       <div class="button-group block">
         <button
           class="font-dm-sans rounded-full px-5 py-3 bg-black text-white mr-10"
+          @click="generateURL"
         >
           Generate
         </button>
-        <button class="font-dm-sans rounded-full px-8 py-3 bg-black text-white">
+        <button
+          class="font-dm-sans rounded-full px-8 py-3 bg-black text-white"
+          @click="saveQR"
+        >
           Save
         </button>
       </div>
     </div>
     <div class="qr-holder flex items-center justify-center w-2/3">
       <div class="w-96 h-full border-2 border-black rounded-xl bg-gray-300">
-        <!-- Your square content goes here -->
+        <!-- Display the generated QR code here -->
+        <img
+          v-if="generatedQR"
+          :src="generatedQR"
+          alt="Generated QR Code"
+          class="w-full h-full"
+        />
+        <div v-else class="flex items-center justify-center h-full">
+          <p class="text-gray-700">No QR code generated yet</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
+
+<script>
+import axios from "axios";
+import QRCode from "qrcode"; // Import the qrcode library
+
+export default {
+  data() {
+    return {
+      url: "", // Bind input value to this data property
+      generatedQR: null, // Store generated QR code image URL
+    };
+  },
+  methods: {
+    async generateURL() {
+      try {
+        const response = await axios.post("http://localhost:3000/generateQR", {
+          url: this.url,
+        });
+
+        this.generatedQR = response.data.generatedQR;
+      } catch (error) {
+        console.error("Error generating QR code:", error);
+      }
+    },
+    saveQR() {
+      if (this.generatedQR) {
+        // Create a virtual link element to trigger the download
+        const link = document.createElement("a");
+        link.href = this.generatedQR;
+        link.download = this.getFileName();
+
+        // Append the link to the document and trigger the download
+        document.body.appendChild(link);
+        link.click();
+
+        // Remove the link from the document
+        document.body.removeChild(link);
+      } else {
+        console.warn("No QR code generated yet. Please generate one first.");
+      }
+    },
+    getFileName() {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "");
+      return `QRCode_${timestamp}.png`;
+    },
+  },
+};
+</script>
